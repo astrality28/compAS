@@ -166,7 +166,8 @@ bool CompASAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* CompASAudioProcessor::createEditor()
 {
-    return new CompASAudioProcessorEditor (*this);
+   // return new CompASAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -181,6 +182,41 @@ void CompASAudioProcessor::setStateInformation (const void* data, int sizeInByte
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+CompASAudioProcessor::createParameterLayout() 
+{
+    // using AudioParameterFloat means we're using a range of values
+    juce::AudioProcessorValueTreeState::ParameterLayout layout; //make an object of class parameter layout
+    layout.add(std::make_unique<juce::AudioParameterFloat>("LowCut Freq", "LowCut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f), 20.f));
+       //layout.add adds the parameter, we pass the name, ID, the min value and the default value, default for low pass=20Hz and highpass=20k Hz
+    layout.add(std::make_unique<juce::AudioParameterFloat>("HighCut Freq", "HighCut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f), 20000.f));
+
+    //peak freq
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq", "Peak Freq", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f), 750.f));
+
+    //peak gain(defined in decibles 
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq", "Peak Freq", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.0f));
+
+    //quality control (low Q - wide) (high Q- narrow)
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality", "Peak Quality", juce::NormalisableRange<float>(0.1f, 10.0f, 0.5f, 1.0f), 1.0f));
+
+    //make a string array for parameters that accept in dB/Octave
+    //bands like these use multiples of 12 or 6 so we fill it with multiples of 12
+    juce::StringArray stringArray;
+    for (int i = 0; i < 4; i++) {
+        juce::String str;
+        str << (12 + i * 12);
+        str << " dB/Oct";
+        stringArray.add(str);
+    }
+
+    //now we add to layout
+    layout.add(std::make_unique<juce::AudioParameterChoice>("LowCut Slope", "LowCut Slope", stringArray, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("HighCut Slope", "HighCut Slope", stringArray, 0));
+
+    return layout;
 }
 
 //==============================================================================

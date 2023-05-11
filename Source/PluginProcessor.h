@@ -61,6 +61,20 @@ public:
     //we pass this as the plugin, parameters are passed by the createParameterLayout function
 
 private:
+    //creating alias to avoid using the entire namespace
+    using Filter = juce::dsp::IIR::Filter<float>; //auto response of 12db/Oct, so if we need like 48, then we can use it 4 times
+    //we can pass context of one, and then it chains 4 times so we get 48dB/Oct
+    //context here is Filter alias
+    using cutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+    //we can define an entire chain for mono signal to process it completely
+    //Chain can define filters like lowpass, highpass, etc
+    using monoChain = juce::dsp::ProcessorChain<cutFilter, Filter, cutFilter>;
+    //monochain is lowCut->parametric->highCut
+    //we need two mono to make stereo
+
+    monoChain leftChain, rightChain;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompASAudioProcessor)
 };

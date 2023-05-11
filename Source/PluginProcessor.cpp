@@ -93,8 +93,20 @@ void CompASAudioProcessor::changeProgramName (int index, const juce::String& new
 //==============================================================================
 void CompASAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    //prepare filter before using by passing a process spec, it passes to each chain
+
+    juce::dsp::ProcessSpec spec;
+
+    spec.maximumBlockSize = samplesPerBlock;
+    //max samples to process
+
+    spec.numChannels = 1;
+    //no of channels, mono=1
+
+    spec.sampleRate = sampleRate;
+
+    leftChain.prepare(spec);
+    rightChain.prepare(spec);
 }
 
 void CompASAudioProcessor::releaseResources()
@@ -144,18 +156,27 @@ void CompASAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
 
-        // ..do something to the data...
-    }
+    //now, our processor chain requires context to run audio
+    //to make context, we need audio block
+    //processblock is called by host and is given buffer with any channel, so we need to extract left and right channel
+    // left = 0, right =1
+
+    juce::dsp::AudioBlock<float> block(buffer);
+
+    auto leftBlock = block.getSingleChannelBlock(0);
+    auto rightBlock = block.getSingleChannelBlock(1);
+
+    //after getting left and right, we get the context
+
+    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+
+    leftChain.process(leftContext);
+    rightChain.process(rightContext);
+
+    // we can pass the context, now our plugin is getting audio
+
 }
 
 //==============================================================================

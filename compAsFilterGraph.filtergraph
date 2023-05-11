@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <FILTERGRAPH>
-  <FILTER uid="1" x="0.5" y="0.1" useARA="0">
+  <FILTER uid="1" x="0.43125" y="0.1028225806451613" useARA="0">
     <PLUGIN name="Audio Input" descriptiveName="" format="Internal" category="I/O devices"
             manufacturer="JUCE" version="1.0" file="" uniqueId="246006c0"
             isInstrument="0" fileTime="0" infoUpdateTime="0" numInputs="0"
@@ -31,7 +31,7 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
-  <FILTER uid="3" x="0.5" y="0.9" useARA="0">
+  <FILTER uid="3" x="0.53125" y="0.8931451612903226" useARA="0">
     <PLUGIN name="Audio Output" descriptiveName="" format="Internal" category="I/O devices"
             manufacturer="JUCE" version="1.0" file="" uniqueId="724248cb"
             isInstrument="0" fileTime="0" infoUpdateTime="0" numInputs="2"
@@ -61,11 +61,11 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
-  <FILTER uid="5" x="0.55875" y="0.6330645161290323" useARA="0" uiLastX_Normal="641"
-          uiLastY_Normal="238" uiopen_Normal="0">
+  <FILTER uid="5" x="0.61125" y="0.6330645161290323" useARA="0" uiLastX_Normal="289"
+          uiLastY_Normal="257" uiopen_Normal="0">
     <PLUGIN name="compAS" format="VST3" category="Fx" manufacturer="Astrality"
             version="1.0.0" file="C:\Program Files\Common Files\VST3\compAS.vst3\Contents\x86_64-win\compAS.vst3"
-            uniqueId="fe68df2f" isInstrument="0" fileTime="187ffc06f71" infoUpdateTime="188040a0757"
+            uniqueId="fe68df2f" isInstrument="0" fileTime="1880b3c6b06" infoUpdateTime="1880b432d14"
             numInputs="2" numOutputs="2" isShell="0" hasARAExtension="0"
             uid="e9581bf5"/>
     <STATE>191.VMjLgXK....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9XCLt3hKt3hKt3hKt3hYRUUSTEETIckVwTjQisVTTgkdEYjKAQjYPQSPWgUdMcjKAQjct3hdA4hKt3hKt3hKtnTUv.UQAslXuk0UXoWUFE0YQcEV77RRC8Vav8lak4Fc9vyKVMEUy.Ea0cVZtMEcgQWY9..</STATE>
@@ -78,14 +78,14 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
-  <FILTER uid="6" x="0.64375" y="0.3669354838709677" useARA="0" uiLastX_Normal="229"
-          uiLastY_Normal="202" uiopen_Normal="1">
+  <FILTER uid="6" x="0.5225" y="0.3024193548387097" useARA="0" uiLastX_Normal="-22"
+          uiLastY_Normal="32" uiopen_Normal="0">
     <PLUGIN name="AudioFilePlayer" format="VST3" category="Fx" manufacturer="Matkat Music LLC"
             version="1.0.0" file="D:\AudioProject\AudioFilePlayer\Builds\VisualStudio2022\x64\Debug\VST3\AudioFilePlayer.vst3\Contents\x86_64-win\AudioFilePlayer.vst3"
-            uniqueId="79fe81c" isInstrument="0" fileTime="18804018d33" infoUpdateTime="188040a0757"
+            uniqueId="79fe81c" isInstrument="0" fileTime="18804018d33" infoUpdateTime="1880b432d15"
             numInputs="2" numOutputs="2" isShell="0" hasARAExtension="0"
             uid="e95d02c7"/>
-    <STATE>355.VMjLgnU....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9DCNx3BTIISX1UEaho2ZVkUdAAkKAwDUigWRWkEcQ0VTucmUY4BQlcUQPolShEjLXYFSGMFLYwVVhETaio2cUgEc3XzXtUEahY1LVkkL2UETxcmQHkGNrEVaM01UkQSQWYGQCgzPEYTXwrFagYlYTgEdIckV4EjTKYFSUM1bvXUV3EjTKYlY3MlLi01RSgCag0VSGMUcYcUV3QiPhE2ZnszbAICSt3hKt3hKt3hKt3hKt3FUUMTUDQEdqw1XmE0UYQTQFM1YAAkKAgDUjYWQwHVdAAkKAwjKtLlKt3hKt3hKt3hYRUUSTEETIckVwTjQisVTTgkdEYDOujzPu0Fbu4VYtQmO77hUSQ0LPwVcmklaSQWXzUlO..</STATE>
+    <STATE>339.VMjLgnT....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9DyMv3BTIISX1UEaho2ZVkUdAAkKAwDUigWRWkEcQ0VTucmUY4BQlQUQPolShEjLXYFSGMFLYwVVhETaio2cUgEc3XzXtUEahY1LVkkL2UETxcmQHkGNrEVaM01UkQSQWYGSosjYPslXqUTLX4VUrIVcUIiXlYFdiIyXsszT3vVXs0zQSUWVWkEdzHjXwsFZKMWPxvjKt3hKt3hKt3hKt3hKtQUUCUEQTg2ZrM1YQcUVDUjQicVPP4RPHQEY1UTLhkWPP4RPL4hKi4hKt3hKt3hKtXlTU0DUQAURWoULEYzXqEEUXoWQFwyKIMzasA2atUlaz4COuX0TTMCTrU2Yo41TzEFck4C.</STATE>
     <LAYOUT>
       <INPUTS>
         <BUS index="0" layout="L R"/>

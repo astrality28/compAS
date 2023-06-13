@@ -27,6 +27,31 @@ struct ChainSettings
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts); //getter
 
+//make monochain public for response curve
+
+//creating alias to avoid using the entire namespace
+using Filter = juce::dsp::IIR::Filter<float>; //auto response of 12db/Oct, so if we need like 48, then we can use it 4 times
+//we can pass context of one, and then it chains 4 times so we get 48dB/Oct
+//context here is Filter alias
+using cutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+//cutFilter is used for low and high cut, with 12dB per filter
+
+//we can define an entire chain for mono signal to process it completely
+//Chain can define filters like lowpass, highpass, etc
+using monoChain = juce::dsp::ProcessorChain<cutFilter, Filter, cutFilter>;
+//monochain is lowCut->parametric->highCut
+//we need two mono to make stereo
+
+enum ChainPositions
+{
+    lowCut,
+    peak,
+    highCut
+
+};
+
+
 //==============================================================================
 /**
 */
@@ -77,33 +102,12 @@ public:
     juce::AudioProcessorValueTreeState apvts{*this, nullptr, "Parameters", createParameterLayout()}; //apvts basically controls all the audio parameters of the project
     //we pass this as the plugin, parameters are passed by the createParameterLayout function
 
+
+    
+
 private:
-    //creating alias to avoid using the entire namespace
-    using Filter = juce::dsp::IIR::Filter<float>; //auto response of 12db/Oct, so if we need like 48, then we can use it 4 times
-    //we can pass context of one, and then it chains 4 times so we get 48dB/Oct
-    //context here is Filter alias
-    using cutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-
-    //cutFilter is used for low and high cut, with 12dB per filter
-
-    //we can define an entire chain for mono signal to process it completely
-    //Chain can define filters like lowpass, highpass, etc
-    using monoChain = juce::dsp::ProcessorChain<cutFilter, Filter, cutFilter>;
-    //monochain is lowCut->parametric->highCut
-    //we need two mono to make stereo
 
     monoChain leftChain, rightChain;
-
-    //define an enum so we know where we are in chain
-    
-    enum ChainPositions
-    {
-        lowCut,
-        peak,
-        highCut
-
-    };
-
     //refactoring our code for filter
 
     void updatePeakFilter(const ChainSettings& chainSettings);

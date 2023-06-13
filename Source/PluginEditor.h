@@ -47,6 +47,8 @@ private:
         lowCutFreqSlider,
         highCutFreqSlider;
 
+    //all components have same thing to be done to them, so
+    //we can make vector and have it iterate over 
     std::vector<juce::Component*> getComps();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompASAudioProcessorEditor)

@@ -45,7 +45,24 @@ private:
         peakGainSlider,
         peakQualitySlider,
         lowCutFreqSlider,
-        highCutFreqSlider;
+        highCutFreqSlider,
+        lowCutSlopeSlider,
+        highCutSlopeSlider;
+
+
+    //to connect sliders to control, we can use apvts
+
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using Attachment = APVTS::SliderAttachment;
+
+    //one attachment for each slider
+    Attachment  peakFreqSliderAttachment,
+            peakGainSliderAttachment,
+            peakQualitySliderAttachment,
+            lowCutFreqSliderAttachment,
+            highCutFreqSliderAttachment,
+            lowCutSlopeSliderAttachment,
+            highCutSlopeSliderAttachment;
 
     //all components have same thing to be done to them, so
     //we can make vector and have it iterate over 

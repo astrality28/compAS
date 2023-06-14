@@ -54,7 +54,6 @@ class CompASAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
     CompASAudioProcessorEditor (CompASAudioProcessor&);
-    ~CompASAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;

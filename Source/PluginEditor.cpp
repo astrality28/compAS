@@ -56,8 +56,7 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
     using namespace juce;
     g.fillAll(Colours::lavender);
 
-    auto bounds = getLocalBounds();
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto responseArea = getLocalBounds();
     auto w = responseArea.getWidth();
 
     auto& lowcut = MonoChain.get<ChainPositions::lowCut>();

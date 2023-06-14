@@ -135,7 +135,7 @@ void CompASAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour(Colours::powderblue);
     g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
 
-    g.setColour(Colours::white);
+    g.setColour(Colours::royalblue);
     g.strokePath(responseCurve, PathStrokeType(3.f));
 
 }
@@ -180,6 +180,12 @@ void CompASAudioProcessorEditor::timerCallback() {
         auto chainSettings = getChainSettings(audioProcessor.apvts);
         auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
         updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
+
+        auto lowcutCoeff = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+        auto highcutCoeff = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCutFilter(MonoChain.get<ChainPositions::lowCut>(), lowcutCoeff, chainSettings.lowCutSlope);
+        updateCutFilter(MonoChain.get<ChainPositions::highCut>(), highcutCoeff, chainSettings.highCutSlope);
+
         //signal the repaint
         repaint();
     }

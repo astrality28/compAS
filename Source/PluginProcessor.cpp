@@ -406,30 +406,35 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
         return settings;
 }
 
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate) {
+    return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+}
+
 void CompASAudioProcessor::updatePeakFilter(const ChainSettings& chainSettings) {
-    auto peakCoeff = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+/*    auto peakCoeff = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
         getSampleRate(),
         chainSettings.peakFreq,
         chainSettings.peakQuality,
-        juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));  //decibels class converts our decible value to gain
+        juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));  *///decibels class converts our decible value to gain
 
     //our coeff object is referenced to heap, so to get value we need to dereference
     
     // commenting cause refactored so function handles replacement
    // *leftChain.get<ChainPositions::peak>().coefficients = *peakCoeff;
     // *rightChain.get<ChainPositions::peak>().coefficients = *peakCoeff;
+    auto peakCoeff = makePeakFilter(chainSettings, getSampleRate());
 
     updateCoefficients(leftChain.get<ChainPositions::peak>().coefficients, peakCoeff);
     updateCoefficients(rightChain.get<ChainPositions::peak>().coefficients, peakCoeff);
 
 }
 
-void CompASAudioProcessor::updateCoefficients(Coefficients& old, const Coefficients& replacements) {
+void updateCoefficients(Coefficients& old, const Coefficients& replacements) {
     *old = *replacements;
 }
 
 void CompASAudioProcessor::updateLowCutFilter(const ChainSettings& chainSettings) {
-    auto cutCoeff = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2 * (chainSettings.lowCutSlope + 1));
+    auto cutCoeff = makeLowCutFilter(chainSettings, getSampleRate());
 
     auto& leftLowCut = leftChain.get<ChainPositions::lowCut>();
     updateCutFilter(leftLowCut, cutCoeff, chainSettings.lowCutSlope);
@@ -438,7 +443,7 @@ void CompASAudioProcessor::updateLowCutFilter(const ChainSettings& chainSettings
 }
 
 void CompASAudioProcessor::updateHighCutFilter(const ChainSettings& chainSettings) {
-    auto cutCoeffH = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, getSampleRate(), 2 * (chainSettings.highCutSlope + 1));
+    auto cutCoeffH = makeHighCutFilter(chainSettings, getSampleRate());
 
     auto& leftHighCut = leftChain.get<ChainPositions::highCut>();
     updateCutFilter(leftHighCut, cutCoeffH, chainSettings.highCutSlope);

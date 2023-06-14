@@ -54,9 +54,109 @@ enum ChainPositions
 using Coefficients = Filter::CoefficientsPtr; //making alias for JUCE reference
 
 //no member variables
-static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+void updateCoefficients(Coefficients& old, const Coefficients& replacements);
 
 Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
+
+template<int Index, typename ChainType, typename CoefficientType>
+void update(ChainType& chain, const CoefficientType& cutCoeff) {
+    updateCoefficients(chain.template get<Index>().coefficients, cutCoeff[Index]);
+    chain.template setBypassed<Index>(false);
+}
+
+// because we don't know which type names are in JUCE,we can make template
+
+template<typename ChainType, typename CoefficientType>
+void updateCutFilter(ChainType& leftLowCut,
+    const CoefficientType& cutCoeff,
+    const Slope& lowCutSlope)
+{
+    // auto cutCoeff = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2 * (chainSettings.lowCutSlope + 1));
+
+    // auto& leftLowCut = leftChain.get<ChainPositions::lowCut>();
+
+    leftLowCut.template setBypassed<0>(true);
+    leftLowCut.template setBypassed<1>(true);
+    leftLowCut.template setBypassed<2>(true);
+    leftLowCut.template setBypassed<3>(true);
+
+    //switch (lowCutSlope) {
+    //case Slope_12:
+    //{
+    //    //get the coefficient
+    //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
+    //    //stop bypassing
+    //    leftLowCut.template setBypassed<0>(false);
+    //    break;
+    //}
+    //case Slope_24:
+    //{
+    //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
+    //    leftLowCut.template setBypassed<0>(false);
+    //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
+    //    leftLowCut.template setBypassed<1>(false);
+
+    //    break;
+    //}
+    //case Slope_36:
+    //{
+    //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
+    //    leftLowCut.template setBypassed<0>(false);
+    //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
+    //    leftLowCut.template setBypassed<1>(false);
+    //    *leftLowCut.template get<2>().coefficients = *cutCoeff[2];
+    //    leftLowCut.template setBypassed<2>(false);
+    //    break;
+    //}
+    //case Slope_48:
+    //{
+    //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
+    //    leftLowCut.template setBypassed<0>(false);
+    //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
+    //    leftLowCut.template setBypassed<1>(false);
+    //    *leftLowCut.template get<2>().coefficients = *cutCoeff[2];
+    //    leftLowCut.template setBypassed<2>(false);
+    //    *leftLowCut.template get<3>().coefficients = *cutCoeff[3];
+    //    leftLowCut.template setBypassed<3>(false);
+    //    break;
+    //}
+
+    //}
+
+    //making switch easy to read by going top down
+    //no break so we can carry the statement downward
+
+    switch (lowCutSlope) {
+
+    case Slope_48:
+    {
+        update<3>(leftLowCut, cutCoeff);
+
+    }
+    case Slope_36:
+    {
+        update<2>(leftLowCut, cutCoeff);
+
+    }
+    case Slope_24:
+    {
+        update<1>(leftLowCut, cutCoeff);
+    }
+    case Slope_12:
+    {
+        update<0>(leftLowCut, cutCoeff);
+    }
+    }
+}
+
+//use inline so linker knows where implementation is done
+inline auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+    return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate, 2 * (chainSettings.lowCutSlope + 1));
+}
+
+inline auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+    return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2 * (chainSettings.highCutSlope + 1));
+}
 
 //==============================================================================
 /**
@@ -116,105 +216,10 @@ private:
     monoChain leftChain, rightChain;
     //refactoring our code for filter
 
-    static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+    //static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
 
 
     void updatePeakFilter(const ChainSettings& chainSettings);
-
-    
-    
-
-    //let's make another template to reduce code in switch below
-    template<int Index,typename ChainType, typename CoefficientType>
-    void update(ChainType& chain, const CoefficientType& cutCoeff) {
-        updateCoefficients(chain.template get<Index>().coefficients, cutCoeff[Index]);
-        chain.template setBypassed<Index>(false);
-    }
-
-    // because we don't know which type names are in JUCE,we can make template
-
-    template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& leftLowCut,
-        const CoefficientType& cutCoeff,
-        const Slope& lowCutSlope)
-    {
-       // auto cutCoeff = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2 * (chainSettings.lowCutSlope + 1));
-
-       // auto& leftLowCut = leftChain.get<ChainPositions::lowCut>();
-
-        leftLowCut.template setBypassed<0>(true);
-        leftLowCut.template setBypassed<1>(true);
-        leftLowCut.template setBypassed<2>(true);
-        leftLowCut.template setBypassed<3>(true);
-
-        //switch (lowCutSlope) {
-        //case Slope_12:
-        //{
-        //    //get the coefficient
-        //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
-        //    //stop bypassing
-        //    leftLowCut.template setBypassed<0>(false);
-        //    break;
-        //}
-        //case Slope_24:
-        //{
-        //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
-        //    leftLowCut.template setBypassed<0>(false);
-        //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
-        //    leftLowCut.template setBypassed<1>(false);
-
-        //    break;
-        //}
-        //case Slope_36:
-        //{
-        //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
-        //    leftLowCut.template setBypassed<0>(false);
-        //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
-        //    leftLowCut.template setBypassed<1>(false);
-        //    *leftLowCut.template get<2>().coefficients = *cutCoeff[2];
-        //    leftLowCut.template setBypassed<2>(false);
-        //    break;
-        //}
-        //case Slope_48:
-        //{
-        //    *leftLowCut.template get<0>().coefficients = *cutCoeff[0];
-        //    leftLowCut.template setBypassed<0>(false);
-        //    *leftLowCut.template get<1>().coefficients = *cutCoeff[1];
-        //    leftLowCut.template setBypassed<1>(false);
-        //    *leftLowCut.template get<2>().coefficients = *cutCoeff[2];
-        //    leftLowCut.template setBypassed<2>(false);
-        //    *leftLowCut.template get<3>().coefficients = *cutCoeff[3];
-        //    leftLowCut.template setBypassed<3>(false);
-        //    break;
-        //}
-
-        //}
-
-        //making switch easy to read by going top down
-        //no break so we can carry the statement downward
-
-        switch (lowCutSlope) {
-
-        case Slope_48:
-            {
-            update<3>(leftLowCut, cutCoeff);
-            
-            }
-            case Slope_36:
-            {
-            update<2>(leftLowCut, cutCoeff);
-
-            }
-            case Slope_24:
-            {
-            update<1>(leftLowCut, cutCoeff);
-            }
-            case Slope_12:
-            {
-            update<0>(leftLowCut, cutCoeff);
-            }
-        }
-    }
 
     //let's refactor so we don't reuse code
 
@@ -223,6 +228,10 @@ private:
 
     void updateFilter();
 
+    
+
+    //let's make another template to reduce code in switch below
+   
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompASAudioProcessor)
 };

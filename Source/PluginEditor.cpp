@@ -30,11 +30,24 @@ CompASAudioProcessorEditor::CompASAudioProcessorEditor(CompASAudioProcessor& p)
     for (auto* comp : getComps()) {
         addAndMakeVisible(comp);
     }
+
+    const auto& params = audioProcessor.getParameters();
+    for (auto param : params) {
+        param->addListener(this);
+    }
+
+    startTimerHz(60);
+
     setSize (600, 400);
 }
 
+//Listener needs to be thread safe
 CompASAudioProcessorEditor::~CompASAudioProcessorEditor()
 {
+    const auto& params = audioProcessor.getParameters();
+    for (auto param : params) {
+        param->removeListener(this);
+    }
 }
 
 //==============================================================================
@@ -123,7 +136,7 @@ void CompASAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
 
     g.setColour(Colours::white);
-    g.strokePath(responseCurve, PathStrokeType(2.f));
+    g.strokePath(responseCurve, PathStrokeType(3.f));
 
 }
 
@@ -154,6 +167,22 @@ void CompASAudioProcessorEditor::resized()
     peakFreqSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.33));
     peakGainSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.5));
     peakQualitySlider.setBounds(bounds);
+}
+
+void CompASAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue) {
+    parametersChanged.set(true);
+}
+
+void CompASAudioProcessorEditor::timerCallback() {
+    if (parametersChanged.compareAndSetBool(false, true))
+    {
+         //update the monochain
+        auto chainSettings = getChainSettings(audioProcessor.apvts);
+        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
+        //signal the repaint
+        repaint();
+    }
 }
 
 std::vector<juce::Component*> CompASAudioProcessorEditor::getComps() {

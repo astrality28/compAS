@@ -21,16 +21,36 @@ struct CustomRotarySlider : juce::Slider
 
 };
 
-//==============================================================================
-/**
-*/
-class CompASAudioProcessorEditor : public juce::AudioProcessorEditor,
-    //inherit from listener class so processing can be done 
+struct ResponseCurveComponent : juce::Component, //inherit from listener class so processing can be done 
     //for editor's chain as well
     juce::AudioProcessorParameter::Listener,
     juce::Timer
     //we can't do GUI stuff in any callback by listener
     //we can update based on a flag which checks
+{
+    ResponseCurveComponent(CompASAudioProcessor&);
+    ~ResponseCurveComponent();
+
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
+    //our timer will check whether parameter has changed and response curve needs updating
+    void timerCallback() override;
+
+    void paint(juce::Graphics& g) override;
+
+    monoChain MonoChain;
+    juce::Atomic<bool> parametersChanged{ false };
+
+private:
+    CompASAudioProcessor& audioProcessor;
+
+};
+
+//==============================================================================
+/**
+*/
+class CompASAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
     CompASAudioProcessorEditor (CompASAudioProcessor&);
@@ -40,18 +60,11 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
-    //our timer will check whether parameter has changed and response curve needs updating
-    void timerCallback() override;
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     CompASAudioProcessor& audioProcessor;
-
-    juce::Atomic<bool> parametersChanged{ false };
 
     //adding sliders for freq, gain, quality
 
@@ -63,6 +76,7 @@ private:
         lowCutSlopeSlider,
         highCutSlopeSlider;
 
+    ResponseCurveComponent responseCurveComponent;
 
     //to connect sliders to control, we can use apvts
 
@@ -82,7 +96,7 @@ private:
     //we can make vector and have it iterate over 
     std::vector<juce::Component*> getComps();
 
-    monoChain MonoChain;
+   // monoChain MonoChain;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompASAudioProcessorEditor)
 };

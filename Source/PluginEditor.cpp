@@ -11,51 +11,50 @@
 
 //==============================================================================
 
-//add all sliders attachment in the constructor, this provides save state functionality alongside connecting dsp w slider
-CompASAudioProcessorEditor::CompASAudioProcessorEditor(CompASAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p),
-
-    peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
-    peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
-    peakQualitySliderAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySlider),
-    lowCutFreqSliderAttachment(audioProcessor.apvts, "LowCut Freq", lowCutFreqSlider),
-    highCutFreqSliderAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSlider),
-    lowCutSlopeSliderAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
-    highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider)
+ResponseCurveComponent::ResponseCurveComponent(CompASAudioProcessor& p) : audioProcessor(p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-
-    //add your component buttons
-    for (auto* comp : getComps()) {
-        addAndMakeVisible(comp);
-    }
-
     const auto& params = audioProcessor.getParameters();
     for (auto param : params) {
         param->addListener(this);
     }
 
     startTimerHz(60);
-
-    setSize (600, 400);
 }
 
-//Listener needs to be thread safe
-CompASAudioProcessorEditor::~CompASAudioProcessorEditor()
-{
+ResponseCurveComponent::~ResponseCurveComponent(){
     const auto& params = audioProcessor.getParameters();
     for (auto param : params) {
         param->removeListener(this);
     }
 }
 
-//==============================================================================
-void CompASAudioProcessorEditor::paint (juce::Graphics& g)
+void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float newValue) {
+    parametersChanged.set(true);
+}
+
+void ResponseCurveComponent::timerCallback() {
+    if (parametersChanged.compareAndSetBool(false, true))
+    {
+        //update the monochain
+        auto chainSettings = getChainSettings(audioProcessor.apvts);
+        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
+
+        auto lowcutCoeff = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+        auto highcutCoeff = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCutFilter(MonoChain.get<ChainPositions::lowCut>(), lowcutCoeff, chainSettings.lowCutSlope);
+        updateCutFilter(MonoChain.get<ChainPositions::highCut>(), highcutCoeff, chainSettings.highCutSlope);
+
+        //signal the repaint
+        repaint();
+    }
+}
+
+void ResponseCurveComponent::paint(juce::Graphics& g)
 {
-        // (Our component is opaque, so we must completely fill the background with a solid colour)
+    // (Our component is opaque, so we must completely fill the background with a solid colour)
     using namespace juce;
-    g.fillAll (Colours::lavender);
+    g.fillAll(Colours::lavender);
 
     auto bounds = getLocalBounds();
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
@@ -86,7 +85,7 @@ void CompASAudioProcessorEditor::paint (juce::Graphics& g)
         //if band is bypassed, then ignore
         if (!MonoChain.isBypassed<ChainPositions::peak>())
             mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        
+
         //since we have 4 low-cut possible values, we need for all four
         if (!lowcut.isBypassed<0>())
             mag *= lowcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
@@ -140,6 +139,41 @@ void CompASAudioProcessorEditor::paint (juce::Graphics& g)
 
 }
 
+
+
+//add all sliders attachment in the constructor, this provides save state functionality alongside connecting dsp w slider
+CompASAudioProcessorEditor::CompASAudioProcessorEditor(CompASAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p),
+    responseCurveComponent(audioProcessor),
+    peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
+    peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
+    peakQualitySliderAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySlider),
+    lowCutFreqSliderAttachment(audioProcessor.apvts, "LowCut Freq", lowCutFreqSlider),
+    highCutFreqSliderAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSlider),
+    lowCutSlopeSliderAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
+    highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider)
+{
+    // Make sure that before the constructor has finished, you've set the
+    // editor's size to whatever you need it to be.
+
+    //add your component buttons
+    for (auto* comp : getComps()) {
+        addAndMakeVisible(comp);
+    }
+
+
+    setSize (600, 400);
+}
+
+//==============================================================================
+void CompASAudioProcessorEditor::paint (juce::Graphics& g)
+{
+        // (Our component is opaque, so we must completely fill the background with a solid colour)
+    using namespace juce;
+    g.fillAll (Colours::lavender);
+
+}
+
 void CompASAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
@@ -153,6 +187,8 @@ void CompASAudioProcessorEditor::resized()
     //remove 33% top
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
 
+    responseCurveComponent.setBounds(responseArea);
+    
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth()*0.33);
     auto highCutArea = bounds.removeFromRight(bounds.getWidth()*0.5);
 
@@ -169,27 +205,7 @@ void CompASAudioProcessorEditor::resized()
     peakQualitySlider.setBounds(bounds);
 }
 
-void CompASAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue) {
-    parametersChanged.set(true);
-}
 
-void CompASAudioProcessorEditor::timerCallback() {
-    if (parametersChanged.compareAndSetBool(false, true))
-    {
-         //update the monochain
-        auto chainSettings = getChainSettings(audioProcessor.apvts);
-        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
-
-        auto lowcutCoeff = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-        auto highcutCoeff = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCutFilter(MonoChain.get<ChainPositions::lowCut>(), lowcutCoeff, chainSettings.lowCutSlope);
-        updateCutFilter(MonoChain.get<ChainPositions::highCut>(), highcutCoeff, chainSettings.highCutSlope);
-
-        //signal the repaint
-        repaint();
-    }
-}
 
 std::vector<juce::Component*> CompASAudioProcessorEditor::getComps() {
     return {
@@ -199,6 +215,7 @@ std::vector<juce::Component*> CompASAudioProcessorEditor::getComps() {
         &lowCutFreqSlider,
         &highCutFreqSlider,
         &lowCutSlopeSlider,
-        &highCutSlopeSlider
+        &highCutSlopeSlider,
+        &responseCurveComponent
     };
 }

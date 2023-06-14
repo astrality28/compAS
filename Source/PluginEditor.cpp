@@ -40,12 +40,91 @@ CompASAudioProcessorEditor::~CompASAudioProcessorEditor()
 //==============================================================================
 void CompASAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+        // (Our component is opaque, so we must completely fill the background with a solid colour)
+    using namespace juce;
+    g.fillAll (Colours::lavender);
 
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-   // g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    auto bounds = getLocalBounds();
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto w = responseArea.getWidth();
+
+    auto& lowcut = MonoChain.get<ChainPositions::lowCut>();
+    auto& peak = MonoChain.get<ChainPositions::peak>();
+    auto& highcut = MonoChain.get<ChainPositions::highCut>();
+
+    auto sampleRate = audioProcessor.getSampleRate();
+
+    //mags=magnitude, we get magnitude from frequency, we'll store 
+    //in vector
+
+    //store one magnitude per pixel as per our width
+
+    std::vector<double> mags;
+
+    mags.resize(w);
+
+    for (int i = 0; i < w; ++i) {
+        double mag = 1.f; //these are expressed in gain units
+
+        //we use mapToLog10 to get map from pixel->frequency for human hearing range
+        auto freq = mapToLog10(double(i) / double(w), 20.0, 20000.0);
+
+        //we update magnitude 
+        //if band is bypassed, then ignore
+        if (!MonoChain.isBypassed<ChainPositions::peak>())
+            mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        
+        //since we have 4 low-cut possible values, we need for all four
+        if (!lowcut.isBypassed<0>())
+            mag *= lowcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowcut.isBypassed<1>())
+            mag *= lowcut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowcut.isBypassed<2>())
+            mag *= lowcut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowcut.isBypassed<3>())
+            mag *= lowcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        // same for highcut
+
+        if (!highcut.isBypassed<0>())
+            mag *= highcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highcut.isBypassed<1>())
+            mag *= highcut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highcut.isBypassed<2>())
+            mag *= highcut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highcut.isBypassed<3>())
+            mag *= highcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        mags[i] = Decibels::gainToDecibels(mag);
+    }
+
+    //convert mag->path
+
+    //build the path and map decible value to response area
+
+    Path responseCurve;
+
+    //maximum and minimum positions in window
+    //jmap normalizes our values for mapping, remaps value between 0 and 1 to our given range
+    const double outputMin = responseArea.getBottom();
+    const double outputMax = responseArea.getY();
+    auto map = [outputMin, outputMax](double input) {
+        return jmap(input, -24.0, 24.0, outputMin, outputMax);
+    };
+
+    responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
+
+    //create lines for every other magnitude
+    for (size_t i = 1; i < mags.size(); ++i) {
+        responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
+    }
+
+    g.setColour(Colours::powderblue);
+    g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
+
+    g.setColour(Colours::white);
+    g.strokePath(responseCurve, PathStrokeType(2.f));
+
 }
 
 void CompASAudioProcessorEditor::resized()

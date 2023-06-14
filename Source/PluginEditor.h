@@ -68,7 +68,7 @@ private:
     //we can make vector and have it iterate over 
     std::vector<juce::Component*> getComps();
 
-    MonoChain monoChain;
+    monoChain MonoChain;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompASAudioProcessorEditor)
 };

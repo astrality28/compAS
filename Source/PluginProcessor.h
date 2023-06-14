@@ -51,6 +51,12 @@ enum ChainPositions
 
 };
 
+using Coefficients = Filter::CoefficientsPtr; //making alias for JUCE reference
+
+//no member variables
+static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+
+Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
 
 //==============================================================================
 /**
@@ -110,12 +116,12 @@ private:
     monoChain leftChain, rightChain;
     //refactoring our code for filter
 
+    static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+
+
     void updatePeakFilter(const ChainSettings& chainSettings);
 
-    using Coefficients = Filter::CoefficientsPtr; //making alias for JUCE reference
-
-    //no member variables
-    static void updateCoefficients(Coefficients& old, const Coefficients& replacements);
+    
     
 
     //let's make another template to reduce code in switch below

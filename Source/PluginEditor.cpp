@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+//customized look and feel so we can rotate our slider in angles
 
 void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
     int width,
@@ -26,7 +27,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
     g.fillEllipse(bounds);
 
     g.setColour(Colour(124u, 2u, 205u));
-    g.drawEllipse(bounds, 1.f);
+    g.drawEllipse(bounds, 2.f);
 
     auto center = bounds.getCentre();
 
@@ -63,6 +64,11 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 
     auto sliderBounds = getSliderBounds();
 
+    g.setColour(Colours::red);
+    g.drawRect(getLocalBounds());
+    g.setColour(Colours::yellow);
+    g.drawRect(sliderBounds);
+
     getLookAndFeel().drawRotarySlider(g,
         sliderBounds.getX(),
         sliderBounds.getY(),
@@ -76,7 +82,22 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
-    return getLocalBounds();
+  //  return getLocalBounds();
+    auto bounds = getLocalBounds();
+
+    //to make ellipses into circle
+    auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
+
+    //let's make size for our fonts
+    size -= getTextHeight() * 2;
+
+    //move slider bounds towards top
+    juce::Rectangle<int> r;
+    r.setSize(size, size);
+    r.setCentre(bounds.getCentreX(),0);
+    r.setY(2);
+
+    return r;
 }
 //==============================================================================
 

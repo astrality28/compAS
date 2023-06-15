@@ -10,6 +10,45 @@
 #include "PluginEditor.h"
 
 
+void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
+    int width,
+    int height,
+    float sliderPosProportional,
+    float rotaryStartAngle,
+    float rotaryEndAngle,
+    juce::Slider&) 
+{
+    using namespace juce;
+
+    auto bounds = Rectangle<float>(x, y, width, height);
+
+    g.setColour(Colours::lavender);
+    g.fillEllipse(bounds);
+
+    g.setColour(Colour(124u, 2u, 205u));
+    g.drawEllipse(bounds, 1.f);
+
+    auto center = bounds.getCentre();
+
+    Path p;
+
+    Rectangle<float> r;
+    r.setLeft(center.getX() - 2);
+    r.setRight(center.getX() + 2);
+    r.setTop(bounds.getY());
+    r.setBottom(center.getY());
+
+    p.addRectangle(r);
+
+    //problem when jmapping
+    jassert(rotaryStartAngle < rotaryEndAngle);
+
+    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+
+    p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+    
+    g.fillPath(p);
+}
 
 void RotarySliderWithLabels::paint(juce::Graphics& g)
 {
@@ -29,7 +68,7 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
         sliderBounds.getY(),
         sliderBounds.getWidth(),
         sliderBounds.getHeight(),
-        jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 0.1),
+        jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0),
         startAng,
         endAng,
         *this);

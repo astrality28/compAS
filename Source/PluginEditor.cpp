@@ -52,18 +52,18 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
 
         g.fillPath(p);
 
-        g.setFont(rswl->getTextHeight());
+        g.setFont(rswl->getTextHeight()-3);
         auto text = rswl->getDisplayString();
         auto strWidth = g.getCurrentFont().getStringWidth(text);
 
         r.setSize(strWidth + 3, rswl->getTextHeight()+2);
         r.setCentre(bounds.getCentre());
 
-        g.setColour(Colours::black);
-        g.fillRect(r);
+      /*  g.setColour(Colours::black);
+        g.fillRect(r);*/
 
-        g.setColour(Colours::white);
-        g.drawFittedText(text, r.toNearestInt(), juce::Justification::verticallyCentred, 1);
+        g.setColour(Colour(47u, 9u, 75u));
+        g.drawFittedText(text, r.toNearestInt(), juce::Justification::centredBottom, 1);
     }
 
     
@@ -187,7 +187,7 @@ ResponseCurveComponent::ResponseCurveComponent(CompASAudioProcessor& p) : audioP
     for (auto param : params) {
         param->addListener(this);
     }
-
+    updateChain();
     startTimerHz(60);
 }
 
@@ -206,18 +206,23 @@ void ResponseCurveComponent::timerCallback() {
     if (parametersChanged.compareAndSetBool(false, true))
     {
         //update the monochain
-        auto chainSettings = getChainSettings(audioProcessor.apvts);
-        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
-
-        auto lowcutCoeff = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-        auto highcutCoeff = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCutFilter(MonoChain.get<ChainPositions::lowCut>(), lowcutCoeff, chainSettings.lowCutSlope);
-        updateCutFilter(MonoChain.get<ChainPositions::highCut>(), highcutCoeff, chainSettings.highCutSlope);
-
+        updateChain();
         //signal the repaint
         repaint();
     }
+}
+
+void ResponseCurveComponent::updateChain() {
+    //update the monochain
+    auto chainSettings = getChainSettings(audioProcessor.apvts);
+    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCoefficients(MonoChain.get<ChainPositions::peak>().coefficients, peakCoefficients);
+
+    auto lowcutCoeff = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+    auto highcutCoeff = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCutFilter(MonoChain.get<ChainPositions::lowCut>(), lowcutCoeff, chainSettings.lowCutSlope);
+    updateCutFilter(MonoChain.get<ChainPositions::highCut>(), highcutCoeff, chainSettings.highCutSlope);
+
 }
 
 void ResponseCurveComponent::paint(juce::Graphics& g)
@@ -338,6 +343,23 @@ CompASAudioProcessorEditor::CompASAudioProcessorEditor(CompASAudioProcessor& p)
     peakFreqSlider.labels.add({ 0.f, "20Hz" });
     peakFreqSlider.labels.add({ 1.f, "20kHz" });
 
+    peakGainSlider.labels.add({ 0.f, "-24dB" });
+    peakGainSlider.labels.add({ 1.f, "+24dB" });
+
+    peakQualitySlider.labels.add({ 0.f, "0.1" });
+    peakQualitySlider.labels.add({ 1.f, "10.0" });
+
+    lowCutFreqSlider.labels.add({ 0.f, "20Hz" });
+    lowCutFreqSlider.labels.add({ 1.f, "20kHz" });
+
+    highCutFreqSlider.labels.add({ 0.f, "20Hz" });
+    highCutFreqSlider.labels.add({ 1.f, "20kHz" });
+
+    lowCutSlopeSlider.labels.add({ 0.0f, "12" });
+    lowCutSlopeSlider.labels.add({ 1.f, "48" });
+
+    highCutSlopeSlider.labels.add({ 0.0f, "12" });
+    highCutSlopeSlider.labels.add({ 1.f, "48" });
 
     //add your component buttons
     for (auto* comp : getComps()) {
@@ -367,10 +389,13 @@ void CompASAudioProcessorEditor::resized()
 
     //bound area
     auto bounds = getLocalBounds();
+
+    float hRatio = 30.f / 100.f; // JUCE_LIVE_CONSTANT(33) / 100.f;
     //remove 33% top
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
 
     responseCurveComponent.setBounds(responseArea);
+    bounds.removeFromTop(5);
     
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth()*0.33);
     auto highCutArea = bounds.removeFromRight(bounds.getWidth()*0.5);

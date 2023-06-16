@@ -77,12 +77,13 @@ struct ResponseCurveComponent : juce::Component, //inherit from listener class s
 
     void paint(juce::Graphics& g) override;
 
-    monoChain MonoChain;
-    juce::Atomic<bool> parametersChanged{ false };
+   
 
 private:
     CompASAudioProcessor& audioProcessor;
-
+    juce::Atomic<bool> parametersChanged{ false };
+    monoChain MonoChain;
+    void updateChain();
 };
 
 //==============================================================================

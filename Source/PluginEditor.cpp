@@ -82,10 +82,10 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 
     auto sliderBounds = getSliderBounds();
 
-    g.setColour(Colours::red);
+  /*  g.setColour(Colours::red);
     g.drawRect(getLocalBounds());
     g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
+    g.drawRect(sliderBounds);*/
 
     getLookAndFeel().drawRotarySlider(g,
         sliderBounds.getX(),
@@ -97,6 +97,31 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
         endAng,
         *this);
 
+    auto center = sliderBounds.toFloat().getCentre();
+    auto radius = sliderBounds.getWidth() * 0.5f;
+
+    g.setColour(Colour(47u, 9u, 75u));
+    g.setFont(getTextHeight());
+
+    auto numChoices = labels.size();
+
+    for (int i = 0; i < numChoices; ++i) {
+        auto pos = labels[i].pos;
+        jassert(0.f <= pos);
+        jassert(pos <= 1.f);
+
+        auto ang = jmap(pos, 0.f, 1.f, startAng, endAng);
+
+        auto c = center.getPointOnCircumference(radius + getTextHeight() * 0.5f + 1, ang);
+        
+        Rectangle<float> r;
+        auto str = labels[i].label;
+        r.setSize(g.getCurrentFont().getStringWidth(str), getTextHeight());
+        r.setCentre(c);
+        r.setY(r.getY() + getTextHeight());
+
+        g.drawFittedText(str, r.toNearestInt(), juce::Justification::centred, 1);
+    }
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
@@ -307,6 +332,12 @@ CompASAudioProcessorEditor::CompASAudioProcessorEditor(CompASAudioProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+
+
+    //add labels
+    peakFreqSlider.labels.add({ 0.f, "20Hz" });
+    peakFreqSlider.labels.add({ 1.f, "20kHz" });
+
 
     //add your component buttons
     for (auto* comp : getComps()) {

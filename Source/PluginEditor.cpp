@@ -17,7 +17,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
     float sliderPosProportional,
     float rotaryStartAngle,
     float rotaryEndAngle,
-    juce::Slider&) 
+    juce::Slider &slider) 
 {
     using namespace juce;
 
@@ -29,26 +29,44 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y,
     g.setColour(Colour(124u, 2u, 205u));
     g.drawEllipse(bounds, 2.f);
 
-    auto center = bounds.getCentre();
+    //for text, we need to do a cast to call functions from juce string
+    if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
+    {
+        auto center = bounds.getCentre();
+        Path p;
 
-    Path p;
+        Rectangle<float> r;
+        r.setLeft(center.getX() - 2);
+        r.setRight(center.getX() + 2);
+        r.setTop(bounds.getY());
+        r.setBottom(center.getY() - rswl->getTextHeight() *1.5);
 
-    Rectangle<float> r;
-    r.setLeft(center.getX() - 2);
-    r.setRight(center.getX() + 2);
-    r.setTop(bounds.getY());
-    r.setBottom(center.getY());
+        p.addRoundedRectangle(r, 2.f);
 
-    p.addRectangle(r);
+        //problem when jmapping
+        jassert(rotaryStartAngle < rotaryEndAngle);
 
-    //problem when jmapping
-    jassert(rotaryStartAngle < rotaryEndAngle);
+        auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
 
-    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
 
-    p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+        g.fillPath(p);
+
+        g.setFont(rswl->getTextHeight());
+        auto text = rswl->getDisplayString();
+        auto strWidth = g.getCurrentFont().getStringWidth(text);
+
+        r.setSize(strWidth + 3, rswl->getTextHeight()+2);
+        r.setCentre(bounds.getCentre());
+
+        g.setColour(Colours::black);
+        g.fillRect(r);
+
+        g.setColour(Colours::white);
+        g.drawFittedText(text, r.toNearestInt(), juce::Justification::verticallyCentred, 1);
+    }
+
     
-    g.fillPath(p);
 }
 
 void RotarySliderWithLabels::paint(juce::Graphics& g)
@@ -98,6 +116,43 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
     r.setY(2);
 
     return r;
+}
+
+
+juce::String RotarySliderWithLabels::getDisplayString() const {
+    //let's use choice params for amending for slope
+
+    if (auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param))
+        return choiceParam->getCurrentChoiceName();
+
+    //now, if freq goes over 1k, we'll add string object to make it KHz
+
+    juce::String str;
+    bool addK = false;
+
+    //check whether it is audio parameter
+    if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param)) {
+        float val = getValue();
+
+        if (val > 999.f) {
+            val /= 1000.f;
+            addK = true;
+        }
+
+        str = juce::String(val, (addK ? 2 : 0)); //if adding K, give 2 decimal places
+
+    }
+    else {
+        jassertfalse;
+    }
+
+    if (suffix.isNotEmpty()) {
+        str << " ";
+        if (addK) str << "k";
+
+        str << suffix;
+    }
+    return str;
 }
 //==============================================================================
 

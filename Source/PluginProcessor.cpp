@@ -347,7 +347,7 @@ bool CompASAudioProcessor::hasEditor() const
 juce::AudioProcessorEditor* CompASAudioProcessor::createEditor()
 {
   return new CompASAudioProcessorEditor (*this);
-   // return new juce::GenericAudioProcessorEditor(*this);
+   //return new juce::GenericAudioProcessorEditor(*this);
     
 }
 

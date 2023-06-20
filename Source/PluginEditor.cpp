@@ -361,10 +361,48 @@ void ResponseCurveComponent::resized() {
     };
 
     for (auto gDb : gain) {
-        auto y = jmap(gDb, -24.f, 24.f, float(getHeight()), 0.f);
+        auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
       //  g.drawHorizontalLine(y, 0, getWidth());
+        g.setColour(gDb == 0.f ? Colour(47u, 9u, 75u) : Colours::darkblue);
+        g.drawHorizontalLine(y, left, right);
     }
-    g.drawRect(getRenderArea());
+
+
+    //g.drawRect(getRenderArea());
+
+    g.setColour(Colour(74u, 9u, 75u));
+    const int fontHeight = 10;
+    g.setFont(fontHeight);
+
+
+    for (int i = 0; i < freqs.size(); ++i)
+    {
+        auto f = freqs[i];
+        auto x = xs[i];
+
+        bool addK = false;
+        String str;
+        if (f > 999.f)
+        {
+            addK = true;
+            f /= 1000.f;
+        }
+
+        str << f;
+        if (addK)
+            str << "k";
+        str << "Hz";
+    
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
+
+        Rectangle<int> r;
+
+        r.setSize(textWidth, fontHeight);
+        r.setCentre(x, 0);
+        r.setY(1);
+
+        g.drawFittedText(str, r, juce::Justification::centred, 1);
+    }
 
 
 }

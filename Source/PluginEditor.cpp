@@ -328,8 +328,10 @@ void ResponseCurveComponent::resized() {
     //usually used frequencies for these type of curves
 
     Array<float> freqs{
-        20, 30, 40, 50, 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000,
-        10000, 20000
+         20, /*30, 40,*/ 50, 100,
+        200, /*300, 400,*/ 500, 1000,
+        2000, /*3000, 4000,*/ 5000, 10000,
+        20000
     };
 
     auto renderArea = getAnalysisArea();
@@ -363,6 +365,7 @@ void ResponseCurveComponent::resized() {
     for (auto gDb : gain) {
         auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
       //  g.drawHorizontalLine(y, 0, getWidth());
+
         g.setColour(gDb == 0.f ? Colour(47u, 9u, 75u) : Colours::darkblue);
         g.drawHorizontalLine(y, left, right);
     }
@@ -404,6 +407,34 @@ void ResponseCurveComponent::resized() {
         g.drawFittedText(str, r, juce::Justification::centred, 1);
     }
 
+    for (auto gDb : gain) {
+        auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
+        String str;
+        if (gDb > 0)
+            str << "+";
+        str << gDb;
+
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
+
+        Rectangle<int> r;
+        r.setSize(textWidth, fontHeight);
+        r.setX(getWidth() - textWidth);
+        r.setCentre(r.getCentreX(), y);
+
+        g.setColour(gDb == 0.f ? Colour(47u, 9u, 75u) : Colours::darkblue);
+
+
+        g.drawFittedText(str, r, juce::Justification::centredLeft, 1);
+
+        str.clear();
+        str << (gDb - 24.f);
+
+        r.setX(1);
+        textWidth = g.getCurrentFont().getStringWidth(str);
+        r.setSize(textWidth, fontHeight);
+        g.setColour(Colour(74u, 9u, 75u));
+        g.drawFittedText(str, r, juce::Justification::centredLeft, 1);
+    }
 
 }
 

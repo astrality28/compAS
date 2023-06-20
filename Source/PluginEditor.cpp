@@ -231,7 +231,9 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
     using namespace juce;
     g.fillAll(Colours::lavender);
 
-    auto responseArea = getLocalBounds();
+    g.drawImage(background, getLocalBounds().toFloat(), false);
+
+    auto responseArea = getAnalysisArea();
     auto w = responseArea.getWidth();
 
     auto& lowcut = MonoChain.get<ChainPositions::lowCut>();
@@ -305,14 +307,89 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
     }
 
-    g.setColour(Colours::powderblue);
-    g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
+    g.setColour(Colour(47u, 9u, 75u));
+    g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.5f);
 
     g.setColour(Colours::royalblue);
     g.strokePath(responseCurve, PathStrokeType(3.f));
 
+
 }
 
+void ResponseCurveComponent::resized() {
+    //we can use graphics context that we created to make this
+
+    using namespace juce;
+    background = Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+
+    Graphics g(background);
+
+    g.fillAll(Colours::lavender);
+    //usually used frequencies for these type of curves
+
+    Array<float> freqs{
+        20, 30, 40, 50, 100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000,
+        10000, 20000
+    };
+
+    auto renderArea = getAnalysisArea();
+    auto left = renderArea.getX();
+    auto right = renderArea.getRight();
+    auto top = renderArea.getY();
+    auto bottom = renderArea.getBottom();
+    auto width = renderArea.getWidth();
+
+    // we can cache redundant values into array
+
+    Array<float> xs;
+   
+    
+    g.setColour(Colours::cornflowerblue);
+    for (auto f : freqs) {
+        auto normX = mapFromLog10(f, 20.f, 20000.f);  //linear space to normalized positions
+        xs.add(left + width * normX);
+        //verticle for frequency
+    }
+
+    for (auto x : xs) {
+        g.drawVerticalLine(x, top, bottom);
+    }
+
+    Array<float> gain{
+        //lines every 12db
+        -24, -12, 0, 12, 24
+    };
+
+    for (auto gDb : gain) {
+        auto y = jmap(gDb, -24.f, 24.f, float(getHeight()), 0.f);
+      //  g.drawHorizontalLine(y, 0, getWidth());
+    }
+    g.drawRect(getRenderArea());
+
+
+}
+
+
+juce::Rectangle<int> ResponseCurveComponent::getRenderArea() {
+    auto bounds = getLocalBounds();
+    // bounds.reduce(11, 8);
+
+    bounds.removeFromTop(12);
+    bounds.removeFromBottom(2);
+
+    bounds.removeFromLeft(20);
+    bounds.removeFromRight(20);
+
+    return bounds;
+}
+
+juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea() {
+    auto bounds = getRenderArea();
+
+    bounds.removeFromTop(4);
+    bounds.removeFromBottom(4);
+    return bounds;
+}
 
 
 //add all sliders attachment in the constructor, this provides save state functionality alongside connecting dsp w slider

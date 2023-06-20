@@ -77,6 +77,8 @@ struct ResponseCurveComponent : juce::Component, //inherit from listener class s
 
     void paint(juce::Graphics& g) override;
 
+    void resized() override;
+
    
 
 private:
@@ -84,6 +86,13 @@ private:
     juce::Atomic<bool> parametersChanged{ false };
     monoChain MonoChain;
     void updateChain();
+
+    //pre-rendering an image
+    juce::Image background;
+
+    juce::Rectangle<int> getRenderArea();
+
+    juce::Rectangle<int> getAnalysisArea();
 };
 
 //==============================================================================

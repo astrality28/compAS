@@ -112,6 +112,11 @@ void CompASAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 
     updateFilter();
 
+    //prepare fifo 
+    leftChannelFifo.prepare(samplesPerBlock);
+    rightChannelFifo.prepare(samplesPerBlock);
+
+
    // updatePeakFilter(chainSettings);
 
     //this was for peak
@@ -335,6 +340,10 @@ void CompASAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     rightChain.process(rightContext);
 
     // we can pass the context, now our plugin is getting audio
+
+    //update fifo 
+    leftChannelFifo.update(buffer);
+    rightChannelFifo.update(buffer);
 
 }
 
